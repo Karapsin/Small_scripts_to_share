@@ -12,7 +12,7 @@ def rand_norm(means_list, std_list, rho, n):
            )
 
 def get_vol_increment(u_t, dXt, dt, kappa, theta, sigma, lambda_bar):
-    return kappa * (theta - u_t) - lambda_bar * sqrt(u_t) * sigma * sqrt(u_t) * dt + sigma * sqrt(u_t) * dXt
+    return (kappa * (theta - u_t) - lambda_bar * u_t * sigma) * dt + sigma * sqrt(u_t) * dXt
 
 def get_stock_increment(dXt, S_t, u_t, dt, r):
     return r * S_t * dt + sqrt(u_t) * S_t * dXt

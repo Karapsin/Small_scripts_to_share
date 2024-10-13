@@ -6,7 +6,7 @@ d = 1/1.4
 gross_risk_free = 1.05
 periods = 10
 production_cost = 40
-include_zero_cf = True 
+include_zero_cf = True
 include_last_period = False #e.g. 10 periods, if True, we have periods from 0 to 10, else from 0 to 9
 
 def get_PV_of_CF(CF, t, Rf=gross_risk_free):

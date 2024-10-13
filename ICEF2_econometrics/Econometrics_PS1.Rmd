@@ -1,0 +1,348 @@
+---
+title: "Problem set 1"
+output: pdf_document
+---
+
+# Problem 1
+The general formula for correlation is:
+$$
+Corr(A, B) = \frac{Cov(A, B)}{\sigma_A*\sigma_B}
+$$
+
+So we just need to apply it for $\frac{X}{Z}$ and $\frac{Y}{Z}$.
+$$
+Corr(\frac{X}{Z}, \frac{Y}{Z}) = \frac{Cov(\frac{X}{Z}, \frac{Y}{Z})}{\sqrt{Var(\frac{X}{Z})Var(\frac{Y}{Z})}} = \frac{E(\frac{XY}{Z^2})-E(\frac{X}{Z})E(\frac{Y}{Z})}{\sqrt{E(\frac{X^2}{Z^2})-E^2(\frac{X}{Z})}\sqrt{E(\frac{Y^2}{Z^2})-E^2(\frac{Y}{Z})}}
+$$
+
+Note that X, Y, Z are independent, hence:
+$$
+E(\frac{XY}{Z^2})-E(\frac{X}{Z})E(\frac{Y}{Z}) = E(X)*E(Y)*(E(\frac{1}{Z^2}-E^2(\frac{1}{Z})))=E(X)*E(Y)*Var(\frac{1}{Z})
+$$
+
+Similarly:
+$$
+E(\frac{X^2}{Z^2})-E^2(\frac{X}{Z})=E(X^2)*E(\frac{1}{Z^2})-E^2(X)*E^2(\frac{1}{Z})
+$$
+
+We can add and subtract $E(X^2)*E^2(\frac{1}{Z})$, which gives:
+$$
+E(X^2)*[E(\frac{1}{Z^2})-E^2(\frac{1}{Z})]+E^2(\frac{1}{Z})*[E(X^2)-E^2(X)]=E(X^2)*Var(\frac{1}{Z})+E^2(\frac{1}{Z})Var(X)
+$$
+
+The same trick can be used for $E(\frac{Y^2}{Z^2})-E^2(\frac{Y}{Z})$.
+
+In the end we have:
+$$
+Corr(\frac{X}{Z}, \frac{Y}{Z}) = \frac{E(X)*E(Y)*Var(\frac{1}{Z})}{\sqrt{E(X^2)*Var(\frac{1}{Z})+E^2(\frac{1}{Z})Var(X)}*\sqrt{E(Y^2)*Var(\frac{1}{Z})+E^2(\frac{1}{Z})Var(Y)}}
+$$
+
+If $E(X)=E(Y)=E(\frac{1}{Z})=1$ and $Var(X)=Var(Y)=Var(\frac{1}{Z})=\sigma^2$, we can use that $Var(X)=E(X^2)-E(X), => E(X^2)=Var(X)+E(X)=\sigma + 1$. And then we can derive:
+$$
+Corr(\frac{X}{Z}, \frac{Y}{Z}) = \frac{\sigma^2}{\sqrt{(\sigma^2+1)*\sigma^2+\sigma^2}*\sqrt{(\sigma^2+1)*\sigma^2+\sigma^2}}=\frac{\sigma^2}{\sigma^2*(\sigma^2+1+1)}=\frac{1}{\sigma^2+2}
+$$
+
+i.e., we have positive correlation, while X, Y and Z are independent.
+
+\newpage
+
+# Problem 2
+
+a)
+$$
+\hat{\beta}=\frac{\sum^n_{i=1}=X_iY_i}{\sum^n_{i=1}=X^2_i} = \frac{\sum^n_{i=1}X_i(X_i\beta+\epsilon_i)}{\sum^n_{i=1}X^2_i} = \frac{\sum^n_{i=1}X_i^2}{\sum^n_{i=1}X^2_i}\beta + \frac{\sum^n_{i=1}X_i\epsilon}{\sum^n_{i=1}X^2_i} =\beta + \frac{\sum^n_{i=1}X_i\epsilon}{\sum^n_{i=1}X^2_i}
+$$
+
+Now note that $E(\epsilon|X) = 0$, hence we can derive:
+
+$$
+E(\hat{\beta}|X) = \beta + \frac{\sum^n_{i=1}X_i*0}{\sum^n_{i=1}X^2_i}=\beta
+$$
+
+And since that $Var(\epsilon|X)=\sigma^2$:
+$$
+Var(\hat{\beta}|X) = Var(\frac{\sum^n_{i=1}X_i\epsilon}{\sum^n_{i=1}X^2_i}|X)=
+\frac{\sum^n_{i=1}X^2_i\sigma^2}{(\sum^n_{i=1}X^2_i)^2}
+=\frac{\sigma^2}{\sum^n_{i=1}X^2_i}
+$$
+b)
+
+$$
+\epsilon^*=Y^*-\hat{Y}=X^*\beta + \epsilon - X^**\hat{\beta} = X^*(\beta-\hat{\beta}) + \epsilon
+$$
+
+Then:
+$$
+E(\epsilon^*|X, X^*)=X^*(\beta - \beta) + 0 = 0
+$$
+$$
+Var(\epsilon^*|X, X^*)=Var(X^*\hat{\beta}|X, X^*) + Var(\epsilon|X^*, X) + 2Cov(X^*(\beta-\hat{\beta}), \epsilon|X, X^*)
+$$
+
+Note that $2Cov(X^*(\beta-\hat{\beta}), \epsilon|X, X^*) = Cov(\hat{\beta}, \epsilon|X, X^*)$ and epsilons are independent from $\hat{\beta}$. 
+Hence:
+$$
+Var(\epsilon^*|X, X^*)=(X^*)^2Var(\hat{\beta}|X, X^*)+\sigma^2=\frac{(X^*)^2\sigma^2}{\sum^n_{i=1}X^2_i} +\sigma^2=\sigma^2(\frac{(X^*)^2}{\sum^n_{i=1}X^2_i} +1)
+$$
+
+c) We have derived variance and expected value of some new observations which are independent from previous, however come from the same model ($\beta$ is the same). So we derived distributional properties of the abnormal returns used in event study approach under $H_0$ which states that there were no significant changes.
+
+
+\newpage
+
+# Problem 3
+
+a)
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+options(scipen=999)
+```
+```{r c1}
+library(dplyr)
+library(tidyquant)
+library(purrr)
+df <- 
+  tq_get('BAS.DE',
+         from = '2013/09/16', 
+         to = '2024/09/19'
+  )%>%
+    select(date, close)%>%
+    mutate(log_return = log(close) - log(lag(close, 1)))
+
+
+get_n_moment <- 
+  function(n, values){
+    obs = length(values)
+    sd_est = sd(values)
+    avg = mean(values)
+    
+    sum((values-avg)^n)*(1/((obs-1)*sd_est^n))
+  }
+
+data <- df$log_return[-1]
+
+obs <-  nrow(df) - 1
+
+get_n_moment(3, data)/sqrt(6/obs)
+```
+We can not reject the null on 5% significance, so we can not conclude that distribution is symmetric.
+
+b)
+```{r c2}
+(get_n_moment(4, data)-3)/sqrt(24/obs)
+```
+
+Here we can reject the null even on 1% significance, so we have fat tails.
+
+c)
+```{r c4}
+t_s <- get_n_moment(3, data)/sqrt(6/obs)
+t_k <-  (get_n_moment(4, data)-3)/sqrt(24/obs)
+
+(t_s^2)+(t_k^2)
+```
+
+And we have chi-square with df=2, hence we can reject the null and conclude that the data is not distributed normally.
+
+d)
+```{r c5}
+ks.test(data, "pnorm")
+```
+
+P-value is less than 0.0001, so we can reject the null, hence log returns are not distributed normally.
+
+e)
+
+Due to summabality of log returns, we can just sum them within each month to get monthly log returns. 
+
+```{r c6}
+df_monthly <- 
+  df%>%
+    mutate(dt_month = lubridate::floor_date(date, "months"))%>%
+    group_by(dt_month)%>%
+    summarise(month_log_return = sum(log_return, na.rm=TRUE))
+
+data <- df_monthly$month_log_return
+obs <-  nrow(df_monthly) - 1
+
+get_n_moment(3, data)/sqrt(6/obs)
+tseries::jarque.bera.test(data)
+ks.test(data, "pnorm")
+```
+
+Based on tests' results we can reject the null about normality in both cases. But the distribution is symmetric.
+
+\newpage
+
+# Problem 4
+
+a) 
+
+The earliest mention about that deal is 2008/02/01: https://www.theguardian.com/media/pda/2008/jun/03/yahoomicrosoftatimeline 
+
+Prices for YHOO are taken from this link: https://www.investing.com/equities/yahoo-inc-historical-data 
+
+So the event window is: 2008/01/29 - 2008/02/04
+Estimation window: 2007/05/20 - 2008/01/28
+
+But 02.02 and 03.02 are weekends, that is why I extend event window: 
+event window is: 2008/01/29 - 2008/02/06
+
+Below is the code for data upload and convenient event study analysis.
+
+```{r c7}
+library(tidyr)
+df <- 
+tq_get(c("MSFT", "^GSPC"), 
+       from="2007-05-23", 
+       to="2008-02-07"
+  )%>%
+  select(date, symbol, close)%>%
+  rbind(read.csv("AABA.csv")%>%
+          rename(date=1, close=2)%>%
+          mutate(symbol='YHOO')%>%
+          select(date, symbol, close)%>%
+          mutate(date = as.Date(date, format="%m/%d/%Y"))%>%
+          filter(date>=as.Date("2007-05-23"))
+  )%>%
+  group_by(symbol)%>%
+  arrange(date)%>%
+  mutate(log_return = log(close) - log(lag(close, 1)))%>%
+  select(-close)%>%
+  filter(!is.na(log_return))%>%
+  pivot_wider(names_from = "symbol", values_from = "log_return")
+
+df_estimation <- df%>%filter(date<as.Date("2008/01/29"))
+df_event <- df%>%filter(date>=as.Date("2008/01/29"))
+
+MSFT_returns_event <- df_event$MSFT
+YHOO_returns_event <- df_event$YHOO
+Market_returns_event <- df_event$`^GSPC`
+
+MSFT_returns_est <- df_estimation$MSFT
+YHOO_returns_est <- df_estimation$YHOO
+Market_returns_est <- df_estimation$`^GSPC`
+
+event_study <- function(share_return_event,
+                        share_return_est,
+                        market_returns_event,
+                        market_returns_est
+               ){
+  
+  model <- lm(share_return_est~market_returns_est)
+  model_coeff <- as.numeric(model$coefficients)
+  
+  if(model_coeff[2]%>%is.na()){
+    model_coeff[2] <- 0
+  }
+  
+  print("Market model:")
+  print(summary(model))
+  
+  event_window <- length(share_return_event)
+  estimation_window <- length(share_return_est)
+  
+  out_of_sample <- as.matrix(cbind(rep(1, event_window), market_returns_event)) 
+  in_sample <- as.matrix(cbind(rep(1, estimation_window), market_returns_est))
+  
+  predictions <- out_of_sample %*% model_coeff
+  abnorm_returns <- share_return_event - predictions
+  
+  ones <- diag(event_window)
+  
+  var_abnorm <- (summary(model)$sigma)^2*(ones + out_of_sample %*% solve(t(in_sample) %*% in_sample)%*% t(out_of_sample))
+
+  c_matrix <- t(lower.tri(matrix(1, event_window, event_window), diag = TRUE))
+  event_car <- c(rep(0, event_window)) # c vector from the lecture
+  event_car[event_window/2] <- 1
+  c_matrix <- cbind(c_matrix, event_car)
+  CARs_for_each_c <- t(c_matrix) %*% abnorm_returns
+  
+  print("normal returns:")
+  print(predictions)
+  
+  print("abnormal returns:")
+  print(abnorm_returns)
+  
+  print("CARs:")
+  print(CARs_for_each_c[-(event_window+1)])
+  
+  Var_for_each_c <- diag(t(c_matrix) %*% var_abnorm %*% c_matrix)
+  SCAR_for_each_c <- CARs_for_each_c/sqrt(Var_for_each_c)
+  
+  print("SCARs:")
+  print(SCAR_for_each_c[-(event_window+1)])
+  
+  print("p-values, z-test:")
+  print((2*(1 - pnorm(abs(SCAR_for_each_c))))[-(event_window+1)])
+
+  print("p-values, t-test:")
+  print((2*(1 - pt(abs(SCAR_for_each_c), df = estimation_window - 2)))[-(event_window+1)])
+}
+
+```
+
+b, c, d)
+
+As we can see from the output below, market returns' impact on YHOO returns is significant, however $R^2$ is quite low, roughly 25%.
+
+In the end we see that both tests provide p-values which are less than 0.0001 starting from the 4th day of the event window (event day), so we can reject the null about no impact.
+
+```{r c8}
+event_study(YHOO_returns_event, 
+            YHOO_returns_est, 
+            Market_returns_event, 
+            Market_returns_est
+)
+```
+
+e)
+For the constant mean model I'm going to use t-test. In this case abnormal returns are the deviations of actual returns from the mean from estimation period, so we need to test if CARs are significantly different from 0. 
+```{r c9}
+library(purrr)
+YHOO_mean <-  mean(YHOO_returns_est)
+normal_returns <- rep(YHOO_mean, length(YHOO_returns_event))
+abnormal_returns <- YHOO_returns_event-normal_returns
+CARs <- cumsum(abnormal_returns)
+
+print("normal returns:")
+print(normal_returns)
+
+print("abnormal returns:")
+print(abnormal_returns)
+
+print("CARs:")
+print(CARs)
+
+print("t-test:")
+print(map_chr(2:length(abnormal_returns), 
+              ~paste0(.x, " days p-value: ", t.test(abnormal_returns[1:.x])$p.value)
+     )
+)
+
+```
+
+As can be seen, we can not reject the null with such model, so we can not conclude that event had an impact on returns.
+
+
+f) for MSFT conclusion is the same, however returns are negative in this case.
+```{r c10}
+event_study(MSFT_returns_event, 
+            MSFT_returns_est, 
+            Market_returns_event, 
+            Market_returns_est
+)
+```
+\newpage
+
+# Problem 5
+a) In Germany there are some holidays which recognized locally, but not country-wide, during such holidays people usually are not working, but exchange is opened. Such holidays are considered as events in that paper. That may cause a reduction in trading activity, especially for the local firms which are traded. Theoretically such reduction should not occur. "In our baseline analysis, we focus on All Saints’ Day as well as on Epiphany. "
+
+b)
+
+1) regression of firms' turnover in a market-wide, value-weighted turnover index (model 2) and pre-event day return (model 2.5?)
+2) only firm-specific average (model 1)
+
+c) "Ceteris paribus, firms in holiday regions are remarkably
+less traded. This finding is mostly confined to the day of the holiday itself, statistically
+significant, economically meaningful, robust, and does not appear to be completely driven
+by differences in information release". For more local firms (which are less visible for non-local investors) effects are stronger.

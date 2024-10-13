@@ -17,10 +17,10 @@ def get_MC_estimate(sigma,
     ):
 
     def get_price_fin():
-        return get_stock_price_path(T, per_num, rho,
-                                    S_0, u_0, kappa,
-                                    theta, lambda_bar,
-                                    sigma, r
+        return get_stock_price_path(T=T, per_num=per_num, rho=rho,
+                                    S_0=S_0, u_0=u_0, kappa=kappa,
+                                    theta=theta, lambda_bar=lambda_bar,
+                                    sigma=sigma, r=r
                )[per_num - 1]
 
     def get_payoff():

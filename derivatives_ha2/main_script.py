@@ -43,10 +43,9 @@ sigma = sigmas_list[0]
 res_list = list()
 for rho in rhos_list:
     print(f"starting sims for rho {rho}")
-    res_list.extend([(x, get_MC_estimate_spec(sigma = sigma, rho = rho, strike = x), rho)
-                     for x in strikes_list
-                    ]
-             )
+    for strike in strikes_list:
+        price = get_MC_estimate_spec(sigma = sigma, rho = rho, strike = strike)
+        res_list.append((strike, find_vol(price, S_0, strike, T, r), rho))
 
 df = pd.DataFrame(res_list)
 
@@ -56,8 +55,8 @@ for group in df[2].unique():
     plt.plot(subset[0], subset[1], label=f'Group {group}')
 
 plt.xlabel('Strikes')
-plt.ylabel('Prices')
-plt.title('Prices by strikes, grouped by rho values')
+plt.ylabel('Implied vol')
+plt.title('Implied vols by strikes, grouped by rho values')
 plt.legend(title='rho values')
 plt.grid(True)
 plt.savefig('derivatives_ha2//1st_plot.png', dpi=300, bbox_inches='tight')

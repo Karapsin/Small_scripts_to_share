@@ -66,31 +66,23 @@ plt.savefig('derivatives_ha2//1st_plot.png', dpi=300, bbox_inches='tight')
 #part 2, different sigmas, rho = 0
 rho = 0
 res_list = list()
+res_list = list()
 for sigma in sigmas_list[1:]:
     print(f"starting sims for sigma {sigma}")
-    res_list.extend([(x, get_MC_estimate_spec(sigma = sigma, rho = rho, strike = x), sigma)
-                     for x in strikes_list
-                    ]
-             )
-
-for i in range(len(res_list)):
-    strike = res_list[i][0]
-    price = res_list[i][1]
-    sigma = res_list[i][2]
-    impl_vol = find_vol(round(price, 1), S_0, strike, T, r)
-
-    res_list[i] = (strike, sigma, impl_vol)
+    for strike in strikes_list:
+        price = get_MC_estimate_spec(sigma = sigma, rho = rho, strike = strike)
+        res_list.append((strike, find_vol(price, S_0, strike, T, r), sigma))
 
 df = pd.DataFrame(res_list)
 
 plt.figure(figsize=(8,6))
-for group in df[1].unique():
-    subset = df[df[1] == group]
-    plt.plot(subset[0], subset[2], label=f'Group {group}')
+for group in df[2].unique():
+    subset = df[df[2] == group]
+    plt.plot(subset[0], subset[1], label=f'Group {group}')
 
 plt.xlabel('Strikes')
 plt.ylabel('implied vol')
-plt.title('Prices by strikes, grouped by sigmas')
+plt.title('Implied vols by strikes, grouped by sigmas')
 plt.legend(title='sigma values')
 plt.grid(True)
 plt.savefig('derivatives_ha2//2nd_plot.png', dpi=300, bbox_inches='tight')

@@ -1,88 +1,90 @@
 import sys
+from types import NoneType
+
 sys.path.append("derivatives_ha2")
 from MC_sim import *
 from BS_implied_vol_search import *
+from plot_funs import *
 import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
 
-num_sims = 10000
-
-T = 0.5
-per_num = 150
-S_0 = 100
-u_0 = 0.01
-kappa = 2
-theta = 0.01
-lambda_bar = 0
-r = 0
+params_dict = {"num_sims": 10000,
+               "T": 0.5,
+               "per_num": 150,
+               "S_0": 100,
+               "u_0": 0.01,
+               "kappa": 2,
+               "theta": 0.01,
+               "lambda_bar": 0,
+               "r": 0
+              }
 
 sigmas_list = [0.225, 0.1, 0.2]
 rhos_list = [-0.5, 0, 0.5]
 strikes_list = [70, 80, 90, 100, 110, 120, 130]
 
-#sigma, rho, strike
-def get_MC_estimate_spec(sigma, rho, strike):
-    return get_MC_estimate(sigma = sigma,
-                           rho = rho,
-                           strike = strike,
-                           T = T,
-                           num_sims = num_sims,
-                           per_num = per_num,
-                           S_0 = S_0,
-                           u_0 = u_0,
-                           kappa = kappa,
-                           theta = theta,
-                           lambda_bar = lambda_bar,
-                           r = r
-            )
+def find_vol_spec(params_dict):
+    def search_vol():
+        price = get_MC_estimate(params_dict)
+        return find_vol(price, params_dict['S_0'], params_dict['strike'], params_dict['T'], params_dict['r'])
+
+    while True:
+        try:
+            vol = search_vol()
+            if vol is None:
+                raise ValueError("Implied volatility is None!")
+            else:
+                break
+        except:
+            print("Implied volatility is None! Retrying...")
+    return vol
+
 ##############################################################################
 #part 1, different rhos, sigma = 0.225
-sigma = sigmas_list[0]
+params_dict['sigma'] = sigmas_list[0]
 
 res_list = list()
 for rho in rhos_list:
     print(f"starting sims for rho {rho}")
     for strike in strikes_list:
-        price = get_MC_estimate_spec(sigma = sigma, rho = rho, strike = strike)
-        res_list.append((strike, find_vol(price, S_0, strike, T, r), rho))
+        params_dict['rho'] = rho
+        params_dict['strike'] = strike
 
-df = pd.DataFrame(res_list)
+        implied_vol = find_vol_spec(params_dict)
 
-plt.figure(figsize=(8,6))
-for group in df[2].unique():
-    subset = df[df[2] == group]
-    plt.plot(subset[0], subset[1], label=f'Group {group}')
+        res_list.append((strike, implied_vol, rho))
 
-plt.xlabel('Strikes')
-plt.ylabel('Implied vol')
-plt.title('Implied vols by strikes, grouped by rho values')
-plt.legend(title='rho values')
-plt.grid(True)
-plt.savefig('derivatives_ha2//1st_plot.png', dpi=300, bbox_inches='tight')
+plot_and_save(df = pd.DataFrame(res_list),
+              group_column = 2,
+              x_column = 0,
+              y_column = 1,
+              x_label = "Strikes",
+              y_label = "Implied vol",
+              title = 'Implied vols by strikes, grouped by rho values',
+              legend_text = "rho values",
+              file_name = "1st_plot.png"
+)
 
 
 ##############################################################################
 #part 2, different sigmas, rho = 0
-rho = 0
-res_list = list()
-res_list = list()
+params_dict['rho'] = 0
+res_list2 = list()
 for sigma in sigmas_list[1:]:
     print(f"starting sims for sigma {sigma}")
     for strike in strikes_list:
-        price = get_MC_estimate_spec(sigma = sigma, rho = rho, strike = strike)
-        res_list.append((strike, find_vol(price, S_0, strike, T, r), sigma))
+        params_dict['sigma'] = sigma
+        params_dict['strike'] = strike
+        implied_vol = find_vol_spec(params_dict)
 
-df = pd.DataFrame(res_list)
+        res_list2.append((strike, implied_vol, sigma))
 
-plt.figure(figsize=(8,6))
-for group in df[2].unique():
-    subset = df[df[2] == group]
-    plt.plot(subset[0], subset[1], label=f'Group {group}')
-
-plt.xlabel('Strikes')
-plt.ylabel('implied vol')
-plt.title('Implied vols by strikes, grouped by sigmas')
-plt.legend(title='sigma values')
-plt.grid(True)
-plt.savefig('derivatives_ha2//2nd_plot.png', dpi=300, bbox_inches='tight')
+plot_and_save(df = pd.DataFrame(res_list2),
+              group_column = 2,
+              x_column = 0,
+              y_column = 1,
+              x_label = "Strikes",
+              y_label = "Implied vol",
+              title = 'Implied vols by strikes, grouped by sigmas',
+              legend_text = "sigma values",
+              file_name = "2nd_plot.png"
+)
